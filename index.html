@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 420px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 { font-size: 1.5rem; color: #333; }
+    form {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button[type="submit"] {
+      background: #2563eb;
+      color: white;
+    }
+    button[type="submit"]:hover { background: #1d4ed8; }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 0.25rem;
+      background: #f8fafc;
+      border-radius: 6px;
+    }
+    li.done { opacity: 0.6; }
+    li.done span { text-decoration: line-through; color: #64748b; }
+    li span { flex: 1; }
+    li button {
+      background: #ef4444;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+    li button:hover { background: #dc2626; }
+    .empty { color: #94a3b8; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>Todo</h1>
+  <form id="form">
+    <input type="text" id="input" placeholder="Add a task" autocomplete="off" required>
+    <button type="submit">Add</button>
+  </form>
+  <ul id="list"></ul>
+
+  <script>
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const list = document.getElementById('list');
+
+    let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+
+    function save() {
+      localStorage.setItem('todos', JSON.stringify(todos));
+      render();
+    }
+
+    function render() {
+      list.innerHTML = todos.length
+        ? todos.map((t, i) => `
+            <li class="${t.done ? 'done' : ''}" data-i="${i}">
+              <span>${escapeHtml(t.text)}</span>
+              <button type="button" class="toggle">${t.done ? 'Undo' : 'Done'}</button>
+              <button type="button" class="remove">Remove</button>
+            </li>
+          `).join('')
+        : '<li class="empty">No tasks yet.</li>';
+
+      list.querySelectorAll('.toggle').forEach(btn => {
+        btn.onclick = () => {
+          const i = +btn.closest('li').dataset.i;
+          todos[i].done = !todos[i].done;
+          save();
+        };
+      });
+      list.querySelectorAll('.remove').forEach(btn => {
+        btn.onclick = () => {
+          const i = +btn.closest('li').dataset.i;
+          todos.splice(i, 1);
+          save();
+        };
+      });
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      todos.push({ text, done: false });
+      input.value = '';
+      save();
+    };
+
+    render();
+  </script>
+</body>
+</html>
